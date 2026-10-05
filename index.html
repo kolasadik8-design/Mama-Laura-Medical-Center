@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mama Laura Medical Center</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body class="bg-[#f4f9f4] p-2 font-sans">
+<div id="login" class="max-w-sm mx-auto mt-10 bg-white p-6 rounded-3xl shadow-2xl border-2 border-[#123D8E]">
+<h1 class="text-center font-black text-xl"><span class="text-[#1AAE4B]">MAMA</span> <span class="text-[#123D8E]">LAURA</span></h1>
+<input id="email" class="w-full mt-4 p-3 border-2 rounded-xl" placeholder="Email">
+<input id="pass" type="password" class="w-full mt-2 p-3 border-2 rounded-xl" placeholder="Password">
+<button onclick="login()" class="w-full mt-3 bg-[#123D8E] text-white p-3 rounded-xl font-black">LOGIN</button>
+<p id="msg" class="text-red-500 text-xs mt-2"></p>
+</div>
+<div id="app" class="hidden max-w-6xl mx-auto">
+<div class="bg-white p-4 rounded-2xl flex justify-between"><b id="uName"></b><button onclick="location.reload()" class="bg-black text-white px-4 py-1 rounded">Logout</button></div>
+<div id="adminBox" class="hidden bg-white p-4 mt-3 rounded-2xl">
+<h2 class="font-black text-[#123D8E]">FINANCE CONTROL</h2>
+<div class="grid grid-cols-2 gap-2 mt-2">
+<input id="labName" placeholder="Lab test name" class="p-2 border rounded"><input id="labPrice" type="number" placeholder="Price SSP" class="p-2 border rounded">
+<button onclick="saveLab()" class="bg-[#1AAE4B] text-white p-2 rounded col-span-2">Add Lab Price</button>
+</div>
+<div id="prices" class="mt-3 text-xs"></div>
+<div class="mt-4">Total Income: <b id="total" class="text-[#1AAE4B] text-xl">0</b> SSP</div>
+</div>
+<div class="bg-white p-4 mt-3 rounded-2xl">
+<h2 class="font-black">ADD PATIENT</h2>
+<input id="pName" placeholder="Patient Name" class="w-full p-2 border rounded mt-2">
+<select id="pDept" class="w-full p-2 border rounded mt-2"><option value="pediatrics">Pediatrics</option><option value="surgery">Surgery</option><option value="obgyn">OBGYN</option></select>
+<button onclick="addPat()" class="w-full mt-2 bg-[#123D8E] text-white p-3 rounded-xl">REGISTER</button>
+</div>
+<div id="list" class="bg-white p-4 mt-3 rounded-2xl"></div>
+</div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBTKKqbrmpF6BoCzN2gK72F9TwQ2YUkR4o",authDomain:"mama-laura-medical-cente-1fb61.firebaseapp.com",projectId:"mama-laura-medical-cente-1fb61",storageBucket:"mama-laura-medical-cente-1fb61.firebasestorage.app",messagingSenderId:"850931317131",appId:"1:850931317131:web:e74efd4bd588a52944d78e"};
+firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); const auth=firebase.auth(); let cur=null;
+async function login(){try{const c=await auth.signInWithEmailAndPassword(email.value,pass.value); const d=await db.collection('mama_staff').doc(c.user.uid).get(); if(!d.exists){msg.innerText='No staff';return;} cur={uid:c.user.uid,...d.data()}; loginDiv();}catch(e){msg.innerText=e.message;}}
+function loginDiv(){document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');uName.innerText=cur.name+' - '+cur.role; if(cur.role==='admin') adminBox.classList.remove('hidden'); load();}
+async function saveLab(){const n=labName.value.toLowerCase().trim(),p=parseInt(labPrice.value); if(!n||!p) return; await db.collection('mama_prices').doc('lab_'+n).set({price:p}); loadPrices();}
+async function loadPrices(){const s=await db.collection('mama_prices').get(); let h=''; s.forEach(d=>{h+=`<div>${d.id}: ${d.data().price} SSP</div>`}); prices.innerHTML=h;}
+async function addPat(){const id='P-'+Date.now(); await db.collection('mama_patients').doc(id).set({id,name:pName.value,dept:pDept.value,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); load();}
+async function load(){const s=await db.collection('mama_patients').orderBy('createdAt','desc').limit(20).get(); let h=''; s.forEach(d=>{h+=`<div class="border-b py-1">${d.data().id} - ${d.data().name} - ${d.data().dept}</div>`}); list.innerHTML=h; loadPrices();}
+</script>
+</body>
+</html>
